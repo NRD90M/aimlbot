@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Title</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <style>
+        body{
+            background: url("image/bg.jpg");
+            background-repeat:repeat;
+            background-attachment: fixed;
+        }
+        nav.navbar.navbar-default.navbar-fixed-top {
+            box-shadow: 1px 1px 50px 0px rgba(50,50,50,0.2);
+        }
+
+        /*动画效果*/
+        nav li{
+            transition: background-color 0.4s ;
+        }
+        nav li:hover{
+            background-color: #e7e7e7;
+            transition: background-color 0.4s ;
+        }
+        .touxiang{
+            width:40px;
+        }
+
+        #chat-area{
+            height: 350px;
+            width: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .container-fluid{
+            padding-top: 80px;
+        }
+
+    </style>
+</head>
+<body>
+
+<!--导航条-->
+<nav class="navbar navbar-default navbar-fixed-top">
+    <!--导航条div-->
+    <div class="container">
+        <!--导航条头部-->
+        <div class="navbar-header">
+            <a href="#" class="navbar-brand">晓同机器人</a>
+            <button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <!--导航条-->
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <!--激活主页-->
+                <li><a href="index.html">主页Home</a></li>
+                <li  class="active"><a href="#">与晓同聊天</a></li>
+                <li><a href="index.html#xiaotong" target="_blank">晓同介绍</a></li>
+                <li><a href="index.html#tongda" target="_blank">同大介绍</a></li>
+                <li><a href="http://www.sxdtdx.edu.cn/" target="_blank">大同大学官网</a></li>
+                <li><a href="http://www.sxdtdx.edu.cn/dtdxjwc/" target="_blank">访问教务处</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">关于晓同</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<br>
+<div class="container">
+    <div class="row container-fluid">
+        <!--左部分-->
+        <div class="col-md-7 col-sm-10 ">
+            <div id="left" class="panel panel-info ">
+
+                <!--最上边的xiaotong头像-->
+                <div class="panel-heading">
+                    <img src="image/100.gif" alt="晓同" class="touxiang img-circle">
+                    <span style="font-size: 18px">&nbsp; 晓同</span>
+                </div>
+
+
+                <!--聊天气泡div-->
+                <!--啊哈哈哈哈-->
+                <!--分割线-->
+                <div class="panel-body">
+                    <div id="chat-area">
+
+                        <!--这是一个气泡-->
+                        <div class="xiaotong">
+                            <div>
+                                <img src="image/100.gif" alt="晓同" class="touxiang img-circle">
+                            </div>
+                            <div>
+                                <div class="left_triangle"></div>
+                                <span>hello ! </span>
+                            </div>
+                        </div>
+
+
+                        <!--这是一个气泡-->
+                        <div class="user">
+                            <div>
+                                <img src="image/user.jpg" alt="用户" class="touxiang img-circle">
+                            </div>
+                            <div>
+                                <div class="right_triangle"></div>
+                                <span>hello world </span>
+                            </div>
+
+                        </div>
+                        <!--气泡结束-->
+
+
+                    </div>
+                </div>
+
+
+
+
+                <!--输入框-->
+                <div class="panel-footer">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="send">
+                        <div class="input-group-btn">
+                            <button class="btn btn-info send" onclick="send()">&nbsp;发送&nbsp;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!--右部分-->
+        <div class="col-md-5 col-sm-10 ">
+            <div id="right" class="panel  panel-info">
+                <div class="panel-heading">
+                    <h4>常见问题</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+<script>
+
+    $(function () {
+        if(oStorage.getItem("chatRecord")){
+            var chatRecord = JSON.parse(oStorage.getItem("chatRecord"));
+            $.each(chatRecord,function (index, value) {
+                console.log(value)
+                addSendMessage(value.question);
+                addRecvMessage(value.reply);
+            });
+        }
+    });
+
+    var oStorage = window.localStorage;
+    //回车事件绑定
+    $('#send').bind('keyup', function(event) {
+        if (event.keyCode == "13") {
+            //回车执行查询
+            send();
+        }
+    });
+    // 发送消息
+    function send(){
+        if($('#send').val()==''){
+            return false;
+        }
+
+        //send message string
+        var question = $('#send').val();
+        addSendMessage(question);
+
+
+
+        //send message use ajax
+        $.post("/bot/chat","question=" + question,function (data,status) {
+            if (status != 200){
+                console.log("not success");
+            }
+            addChatRecord(question,data);
+            addRecvMessage(data);
+        });
+
+
+    }
+
+    function addChatRecord(question,reply){
+        var chatRecord = [];
+        var message = {question:question,reply:reply};
+        if(oStorage.getItem("chatRecord")){
+            chatRecord = JSON.parse(oStorage.getItem("chatRecord"))
+        }
+        chatRecord.push(message);
+        oStorage.setItem("chatRecord",JSON.stringify(chatRecord));
+    }
+
+
+    function addSendMessage(question) {
+        $('#chat-area').append("<div class='user'><div><img src='image/user.jpg' alt='用户' class='touxiang img-circle'> </div><div class='add_left'><div class='right_triangle'></div></div></div>");
+        $('.add_left').append('<span>'+ question +'</span>');
+        $('#send').val('');
+        $('.add_left').removeClass();
+    }
+
+    function addRecvMessage(reply) {
+        if (reply == null){
+            reply = "未接收到服务器回执消息....";
+        }
+        $('#chat-area').append("<div class='xiaotong'><div><img src=\"image/100.gif\" alt=\"晓同\" class=\"touxiang img-circle\"> </div><div class='add_right'><div class='left_triangle'></div></div></div>");
+        $('.add_right').append('<span>'+ reply + '</span>');
+        $('.add_right').removeClass();
+    }
+</script>
+</html>
